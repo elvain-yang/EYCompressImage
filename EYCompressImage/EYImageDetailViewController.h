@@ -10,6 +10,10 @@
 #import "EYImageModel.h"
 @interface EYImageDetailViewController : UIViewController
 
+/**
+ *  图片显示视图，可以查看具体为哪一张图片
+ */
+
 -(instancetype)initWithImageModel:(EYImageModel *)model;
 
 @end

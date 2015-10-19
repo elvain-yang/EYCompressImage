@@ -10,7 +10,9 @@
 
 @interface EYImageListTableViewController : UITableViewController
 
-
+/**
+ *  图片列表视图根据传入Model显示
+ */
 
 -(id)initWithImagesArray:(NSMutableArray *)modelArray;
 

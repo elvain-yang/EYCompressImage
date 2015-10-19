@@ -14,8 +14,6 @@
 #define TARGET_DIRECTORY @"target_images"
 
 #define REQUEST_STRING @"https://api.tinify.com/shrink"
-#define BASIC_AUTH_USERNAME @"iBlock"
-#define BASIC_AUTH_PASSWORD @"CyQKq6wNovgACDimtmC_6Iqdx4wfDYXa"
 
 NSString *const EYSelectedViewControllerWillAppearNotification = @"EYSelectedViewControllerWillAppearNotification";
 NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelectedViewControllerWillDisappearNotification";
@@ -26,6 +24,8 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     NSArray *_selecetedCellName;
     NSMutableArray *_imageArray;
     NSMutableArray *_imageModelArray;
+    NSMutableArray *_imageModelCompleteArray;
+    NSMutableArray *_imageModelUncompleteArray;
     NSUInteger _imagesDetailNum;
     NSUInteger _completeNum;
     NSUInteger _uncompleteNum;
@@ -33,6 +33,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     UIButton *_btn;
     UILabel *_imageNameLabel;
     UIProgressView *_progressView;
+    
+    NSString *_userName;
+    NSString *_password;
 }
 @end
 
@@ -40,12 +43,38 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 
 #pragma mark ViewController life circle
 
+/**
+ *  初始化方法
+ *  @param  userName    tinify注册的用户名
+ *  @param  password    tinify注册后返回的key
+ *
+ *  @return 返回对象实例
+ */
+-(instancetype)initWithUserName:(NSString *)userName andPassword:(NSString *)password
+{
+    self = [super init];
+    if(self)
+    {
+        _userName = userName;
+        _password = password;
+    }
+    return self;
+}
+
+/**
+ *  每次进入都会重新载入图片数据，更新内容
+ *  发送通知来隐藏window显示
+ */
 - (void)viewWillAppear:(BOOL)animated
 {
     [self loadImages];
     [[NSNotificationCenter defaultCenter] postNotificationName:EYSelectedViewControllerWillAppearNotification object:nil];
 }
 
+/**
+ *  加载navigationController相关配置
+ *  加载表示图、按钮和进度条视图
+ */
 - (void)viewDidLoad
 {
     [self loadNavigationController];
@@ -61,6 +90,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     // Dispose of any resources that can be recreated.
 }
 
+/**
+ *  加载表示图
+ */
 - (void)loadTableView
 {
     _imagesDetailNum = 0;
@@ -78,6 +110,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     _tableView.dataSource = self;
 }
 
+/**
+ *  加载按钮
+ */
 - (void)loadBtn
 {
     _btn = [[UIButton alloc] initWithFrame:CGRectMake(10, self.view.frame.size.height - 44, _tableView.frame.size.width - 20, 44)];
@@ -88,6 +123,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     [self.view addSubview:_btn];
 }
 
+/**
+ *  加载进度条
+ */
 - (void)loadProgressView
 {
     _progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(10, self.view.frame.size.height / 2, self.view.frame.size.width - 20, 2)];
@@ -98,7 +136,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     [self.view addSubview:_imageNameLabel];
 }
 
-
+/**
+ *  加载navigationController配置
+ */
 - (void)loadNavigationController
 {
     [self setTitle:@"选择功能"];
@@ -108,10 +148,15 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     self.navigationItem.rightBarButtonItem = rightBarButtonItem;
 }
 
+/**
+ *  设置请求
+ *  这里主要针对tinify接口来设置
+ *  向HTTP header中添加Authorization字段 对应为base64(userName:password)
+ */
 -(void)setRequestBaseInfo:(NSMutableURLRequest *)request
 {
-    NSString *basicAuthUsername = BASIC_AUTH_USERNAME;
-    NSString *basicAuthPassword = BASIC_AUTH_PASSWORD;
+    NSString *basicAuthUsername = _userName;
+    NSString *basicAuthPassword = _password;
     NSData *authorizationData = [[NSString stringWithFormat:@"%@:%@",basicAuthUsername,basicAuthPassword] dataUsingEncoding:NSASCIIStringEncoding];
     NSString *authorizationStr = [NSString stringWithFormat:@"Basic %@",[authorizationData base64EncodedStringWithOptions:0]];
     NSLog(@"%@",authorizationStr);
@@ -120,6 +165,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     [request addValue:@"*/*" forHTTPHeaderField:@"Accept"];
 }
 
+/**
+ *  创建配置Connection进行上传图片请求
+ */
 -(void)onRequestConnection:(NSMutableURLRequest *)request
 {
     NSURLConnection *connection;
@@ -139,10 +187,16 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     }
 }
 
+/**
+ *  加载图片信息，图片位于沙盒的Documents/images中，
+ *  该函数会遍历images文件夹中的所有文件，只要是png格式图片全都会被加载
+ */
 - (void)loadImages
 {
     _imageArray = [[NSMutableArray alloc] initWithCapacity:0];
     _imageModelArray = [[NSMutableArray alloc] initWithCapacity:0];
+    _imageModelCompleteArray = [[NSMutableArray alloc] initWithCapacity:0];
+    _imageModelUncompleteArray = [[NSMutableArray alloc] initWithCapacity:0];
     NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     NSString *imagesPath = [NSString stringWithFormat:@"%@/%@",path,DEFAULT_DIRECTORY];
     
@@ -153,6 +207,10 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     if(error != nil)
     {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"错误" message:@"沙盒中不存在images文件夹" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            
+        }];
+        [alert addAction:action];
         [self presentViewController:alert animated:YES completion:nil];
     }
     else if([contents count] > 0)
@@ -184,6 +242,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     [_tableView reloadData];
 }
 
+/**
+ *  递归加载子文件夹图片
+ */
 - (void)addImagesFormPath:(NSString *)directoryPath
 {
     NSFileManager *manager = [NSFileManager defaultManager];
@@ -212,6 +273,12 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     }
 }
 
+/**
+ *  获取没个图片model的状态
+ *  如果在目标文件夹中已经存在该图片，则为完成
+ *  如果在日志文件中存在该图片名，则为失败
+ *  如果都不存在则为未处理
+ */
 - (void)getStatus
 {
     NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
@@ -237,6 +304,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
                 if([image isEqualToString:model.name])
                 {
                     model.status = EYImageModelStatusComplate;
+                    [_imageModelCompleteArray addObject:model];
                     _completeNum++;
                 }
             }
@@ -247,14 +315,18 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 
 -(void)progressValueChanged
 {
-    double additionValue = 0.5 / [_imageModelArray count];
+    double additionValue = 2.0 / [_imageModelArray count];
     [_progressView setProgress:[_progressView progress] + additionValue animated:YES];
     if([_progressView progress] >= 0.9999999 && [_progressView progress] <= 1.000001)
     {
         [_btn setEnabled:YES];
+        [_tableView reloadData];
     }
 }
 
+/**
+ *  获取下载后文件保存目录
+ */
 -(NSString *)loadDownloadPath
 {
     NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
@@ -268,6 +340,11 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     return downloadPath;
 }
 
+/**
+ *  执行下载任务，当上传完成后，服务器会在response header中返回下载url
+ *  @param  key    标示下载的是那张图片，用于下载后重命名图片
+ *  @param  urlStr response中得到的下载路径
+ */
 -(void)doDownloadTaskWithKey:(NSString *)key urlStr:(NSString *)urlStr
 {
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlStr]];
@@ -275,25 +352,35 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     NSString *downloadPath = [self loadDownloadPath];
     downloadPath = [downloadPath stringByAppendingPathComponent:key];
         
-    [self saveFileWithData:data path:downloadPath];
+    [self saveFileWithData:data path:downloadPath key:key];
     _imageNameLabel.text = key;
     [self progressValueChanged];
         }];
     
 }
 
--(void)saveFileWithData:(NSData *)data path:(NSString *)path
+/**
+ *  创建下载好的文件
+ */
+-(void)saveFileWithData:(NSData *)data path:(NSString *)path key:(NSString *)key
 {
     NSFileManager *manager = [NSFileManager defaultManager];
     if(![manager fileExistsAtPath:path])
     {
         if([manager createFileAtPath:path contents:data attributes:nil])
         {
+            EYImageModel *model = [self getModelByKey:key];
+            [_imageModelCompleteArray addObject:model];
+            _completeNum++;
+            _uncompleteNum--;
             NSLog(@"%@ created",[path lastPathComponent]);
         }
     }
 }
 
+/**
+ *  保存下载失败图片到日志
+ */
 -(void)saveUnRequestImage:(NSString *)imgName;
 {
     __block NSString *tempName = imgName;
@@ -312,7 +399,26 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     });
 }
 
+/**
+ *  从_imageModelArray中，根据key来取得对应model
+ */
+-(EYImageModel *)getModelByKey:(NSString *)key
+{
+    EYImageModel *getModel;
+    for(EYImageModel *model in _imageModelArray)
+    {
+        if([model.name isEqualToString:key])
+        {
+            getModel = model;
+        }
+    }
+    return getModel;
+}
+
 #pragma mark UIButton Click Event
+/**
+ *  批量转换按钮
+ */
 - (void)clickBtn:(UIButton *)btn
 {
     NSURL *url = [NSURL URLWithString:REQUEST_STRING];
@@ -324,6 +430,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 }
 
 #pragma mark UIBarButtonItem ClickEvent
+/**
+ *  dismissVC 发送通知让window显示
+ */
 - (void)dismissViewController:(UIBarButtonItem *)item
 {
     [self dismissViewControllerAnimated:YES completion:^{
@@ -331,6 +440,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
     }];
 }
 
+/**
+ *  获取沙河路径
+ */
 - (void)sandPath:(UIBarButtonItem *)item
 {
     NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
@@ -370,12 +482,28 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    EYImageListTableViewController *imageListTableViewController = [[EYImageListTableViewController alloc] initWithImagesArray:_imageModelArray];
-    [self.navigationController pushViewController:imageListTableViewController animated:YES];
+    if(indexPath.row == 0)
+    {
+        EYImageListTableViewController *imageListTableViewController = [[EYImageListTableViewController alloc] initWithImagesArray:_imageModelArray];
+        [self.navigationController pushViewController:imageListTableViewController animated:YES];
+    }
+    else if (indexPath.row == 1)
+    {
+        EYImageListTableViewController *imageListTableViewController = [[EYImageListTableViewController alloc] initWithImagesArray:_imageModelCompleteArray];
+        [self.navigationController pushViewController:imageListTableViewController animated:YES];
+    }
+    else if(indexPath.row == 2)
+    {
+        EYImageListTableViewController *imageListTableViewController = [[EYImageListTableViewController alloc] initWithImagesArray:_imageModelUncompleteArray];
+        [self.navigationController pushViewController:imageListTableViewController animated:YES];
+    }
 }
 
 #pragma mark UIURLConnectionDataDelegate
 
+/**
+ *  上传图片回调，返回下载地址
+ */
 -(void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
 {
     NSURLRequest *request = connection.originalRequest;
@@ -393,6 +521,9 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 
 #pragma mark UIURLConnectionDelegate
 
+/**
+ *  安全验证，接口基于HTTPS进行，这里绕过证书验证
+ */
 -(BOOL)connection:(NSURLConnection*)connection canAuthenticateAgainstProtectionSpace:(NSURLProtectionSpace*)protectionSpace
 {
     NSLog(@"%@",protectionSpace.authenticationMethod);

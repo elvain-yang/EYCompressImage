@@ -33,6 +33,9 @@
     self.title = @"图片详情";
 }
 
+/**
+ *  处理图片高度、宽度超出屏幕逻辑，如果高度超出按高度为屏高的比例来缩放宽度，对宽度同理
+ */
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];

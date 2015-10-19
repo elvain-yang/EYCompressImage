@@ -13,4 +13,6 @@ extern NSString *const EYSelectedViewControllerWillDisappearNotification;
 
 @interface EYSelectedViewController : UIViewController<NSURLConnectionDataDelegate,NSURLConnectionDelegate>
 
+-(instancetype)initWithUserName:(NSString *)userName andPassword:(NSString *)password;
+
 @end

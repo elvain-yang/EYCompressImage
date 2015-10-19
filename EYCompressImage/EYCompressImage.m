@@ -19,12 +19,15 @@
     UIViewController *_baseViewController;
     
     EYSelectedViewController *_selectedViewController;
+    
+    NSString *_userName;
+    NSString *_password;
 }
 @end
 
 @implementation EYCompressImage
 
--(instancetype)initWithBaseViewController:(UIViewController *)viewController
+-(instancetype)initWithBaseViewController:(UIViewController *)viewController userName:(NSString *)userName password:(NSString *)password
 {
     self = [super init];
     if(self)
@@ -35,7 +38,7 @@
         
         _window.layer.cornerRadius = EYCOMPRESSIMAGE_HEIGHT / 2;
         _window.backgroundColor = [UIColor lightGrayColor];
-        
+        _window.rootViewController = [UIViewController new];
         [_window makeKeyAndVisible];
         
         _btn = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, EYCOMPRESSIMAGE_WIDTH, EYCOMPRESSIMAGE_HEIGHT)];
@@ -49,6 +52,9 @@
         _baseViewController = viewController;
         
         [_window addSubview:_btn];
+        
+        _userName = userName;
+        _password = password;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectedViewControllerStatusNotification:) name:EYSelectedViewControllerWillAppearNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectedViewControllerStatusNotification:) name:EYSelectedViewControllerWillDisappearNotification object:nil];

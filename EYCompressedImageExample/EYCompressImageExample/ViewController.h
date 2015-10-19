@@ -9,9 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "EYCompressImage.h"
 
-@interface ViewController : UIViewController<NSURLConnectionDelegate,NSURLConnectionDataDelegate>
-
-@property (weak, nonatomic) IBOutlet UIProgressView *progress;
+@interface ViewController : UIViewController
 
 @end
 
