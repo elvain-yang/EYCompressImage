@@ -21,7 +21,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _compressImage = [[EYCompressImage alloc] initWithBaseViewController:self userName:@"iBlock" password:@"CyQKq6wNovgACDimtmC_6Iqdx4wfDYXa"];
+    _compressImage = [[EYCompressImage alloc] initWithBaseViewController:self userName:@"guoyang" password:@"7DN1nBxKA0ZYObMFLDvIaA8Srpa2Ikmy"];
 }
 
 - (void)didReceiveMemoryWarning {
