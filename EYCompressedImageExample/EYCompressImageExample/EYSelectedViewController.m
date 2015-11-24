@@ -182,6 +182,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
         UIImage *image = [UIImage imageWithData:data];
         NSLog(@"%@",image);
         [forRequest setHTTPBodyStream:[[NSInputStream alloc] initWithData:data]];
+        NSLog(@"%@",forRequest);
         connection = [[NSURLConnection alloc] initWithRequest:forRequest delegate:self];
         [connection start];
     }
@@ -219,7 +220,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
         {
             BOOL isDir = NO;
             NSString *ext = [path pathExtension];
-            [manager fileExistsAtPath:path isDirectory:&isDir];
+            [manager fileExistsAtPath:[imagesPath stringByAppendingPathComponent:path] isDirectory:&isDir];
             if(isDir || [ext isEqualToString:@"xcassets"])
             {
                 NSString *directoryPath = [NSString stringWithFormat:@"%@/%@",imagesPath,path];
@@ -255,7 +256,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
         {
             BOOL isDir;
             NSString *ext = [path pathExtension];
-            [manager fileExistsAtPath:path isDirectory:&isDir];
+            [manager fileExistsAtPath:[directoryPath stringByAppendingPathComponent:path] isDirectory:&isDir];
             if(isDir || [ext isEqualToString:@"imageset"])
             {
                 NSString *nextDirectoryPath = [NSString stringWithFormat:@"%@/%@",directoryPath,path];

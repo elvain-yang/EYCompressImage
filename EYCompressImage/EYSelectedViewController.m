@@ -11,7 +11,7 @@
 #import "EYImageModel.h"
 
 #define DEFAULT_DIRECTORY @"images"
-#define TARGET_DIRECTORY @"target_images"
+#define TARGET_DIRECTORY @"targetImages"
 
 #define REQUEST_STRING @"https://api.tinify.com/shrink"
 
@@ -182,6 +182,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
         UIImage *image = [UIImage imageWithData:data];
         NSLog(@"%@",image);
         [forRequest setHTTPBodyStream:[[NSInputStream alloc] initWithData:data]];
+        NSLog(@"%@",forRequest);
         connection = [[NSURLConnection alloc] initWithRequest:forRequest delegate:self];
         [connection start];
     }
@@ -219,7 +220,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
         {
             BOOL isDir = NO;
             NSString *ext = [path pathExtension];
-            [manager fileExistsAtPath:path isDirectory:&isDir];
+            [manager fileExistsAtPath:[imagesPath stringByAppendingPathComponent:path] isDirectory:&isDir];
             if(isDir || [ext isEqualToString:@"xcassets"])
             {
                 NSString *directoryPath = [NSString stringWithFormat:@"%@/%@",imagesPath,path];
@@ -255,7 +256,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
         {
             BOOL isDir;
             NSString *ext = [path pathExtension];
-            [manager fileExistsAtPath:path isDirectory:&isDir];
+            [manager fileExistsAtPath:[directoryPath stringByAppendingPathComponent:path] isDirectory:&isDir];
             if(isDir || [ext isEqualToString:@"imageset"])
             {
                 NSString *nextDirectoryPath = [NSString stringWithFormat:@"%@/%@",directoryPath,path];
@@ -315,7 +316,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 
 -(void)progressValueChanged
 {
-    double additionValue = 2.0 / [_imageModelArray count];
+    double additionValue = 0.5 / [_imageModelArray count];
     [_progressView setProgress:[_progressView progress] + additionValue animated:YES];
     if([_progressView progress] >= 0.9999999 && [_progressView progress] <= 1.000001)
     {
@@ -330,7 +331,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 -(NSString *)loadDownloadPath
 {
     NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-    NSString *downloadPath = [documentPath stringByAppendingPathComponent:@"targetImages"];
+    NSString *downloadPath = [documentPath stringByAppendingPathComponent:TARGET_DIRECTORY];
     NSFileManager *manager = [NSFileManager defaultManager];
     if(![manager fileExistsAtPath:downloadPath])
     {
@@ -385,7 +386,7 @@ NSString *const EYSelectedViewControllerWillDisappearNotification = @"EYSelected
 {
     __block NSString *tempName = imgName;
     NSFileManager *manager = [NSFileManager defaultManager];
-    NSString *unRequestImageSavePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingString:@"unsaveFile"];
+    NSString *unRequestImageSavePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"unsaveFile"];
     if(![manager fileExistsAtPath:unRequestImageSavePath])
     {
         [manager createFileAtPath:unRequestImageSavePath contents:nil attributes:nil];

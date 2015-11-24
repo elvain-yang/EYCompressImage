@@ -64,7 +64,7 @@
 
 -(void)btnClick:(id)sender
 {
-    _selectedViewController = [[EYSelectedViewController alloc] init];
+    _selectedViewController = [[EYSelectedViewController alloc] initWithUserName:_userName andPassword:_password];
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:_selectedViewController];
     [_baseViewController presentViewController:navigationController animated:YES completion:nil];
     _window.hidden = YES;
